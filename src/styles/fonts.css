@@ -1,0 +1,19 @@
+/* Pretendard GOV — KRDS 패키지(krds-uiux) 동봉 서브셋 폰트. 시안의 /_blob 주소를 대체한다. */
+@font-face {
+  font-family: 'Pretendard GOV';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../node_modules/krds-uiux/resources/fonts/PretendardGOV-Regular.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard GOV';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../node_modules/krds-uiux/resources/fonts/PretendardGOV-Medium.subset.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard GOV';
+  font-weight: 700;
+  font-display: swap;
+  src: url('../../node_modules/krds-uiux/resources/fonts/PretendardGOV-Bold.subset.woff2') format('woff2');
+}
