@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useData } from '../data/DataContext'
 import { expectedCount, fmtInt, fmtSigned, freqRows, sortAsc, sortDesc, windowSize, type FreqRow, type Period } from '../data/calc'
-import { Ball, Card, Segment, usePageTitle } from '../components/ui'
+import { Ball, Callout, Card, Segment, usePageTitle } from '../components/ui'
 import DeviationBars from '../components/charts/DeviationBars'
 
 function TopTable({ title, rows, color, id }: { title: string; rows: FreqRow[]; color: 'up' | 'down'; id: string }) {
@@ -52,7 +52,7 @@ function TopTable({ title, rows, color, id }: { title: string; rows: FreqRow[]; 
 }
 
 export default function Freq() {
-  usePageTitle('번호 빈도')
+  usePageTitle('번호별 빈도')
   const { draws, status } = useData()
   const N = draws.length
   const [period, setPeriod] = useState<Period>('all')
@@ -64,9 +64,9 @@ export default function Freq() {
   return (
     <>
       <div className="title-row">
-        <div className="stack">
-          <h1 className="title">번호 빈도</h1>
-          <p className="lead-text">번호별 출현 횟수를 기대값과 비교합니다. 기대값보다 많으면 빨강, 적으면 파랑입니다.</p>
+        <div className="stack gap16 grow">
+          <h1 className="title">번호별 빈도</h1>
+          <Callout lead="번호별 출현 횟수를 기대값과 비교합니다.">기대값보다 많으면 빨강, 적으면 파랑입니다.</Callout>
         </div>
         <Segment<Period>
           label="기간 선택"

@@ -5,12 +5,13 @@ import { fmtDate, fmtEok, fmtInt, latestSummary } from '../data/calc'
 import type { LottoData } from '../data/types'
 
 export const MENU = [
-  { to: '/sum', label: '합계 분석' },
-  { to: '/freq', label: '번호 빈도' },
-  { to: '/gap', label: '미출현' },
-  { to: '/pattern', label: '패턴' },
-  { to: '/mine', label: '내 번호' },
-  { to: '/draw', label: '회차 조회' },
+  { to: '/sum', label: '회차별 합계' },
+  { to: '/freq', label: '번호별 빈도' },
+  { to: '/gap', label: '미출현 분석' },
+  { to: '/pattern', label: '패턴 분석' },
+  { to: '/mine', label: '내 번호 분석' },
+  { to: '/pick', label: '내 번호 추천' },
+  { to: '/draw', label: '회차별 조회' },
 ]
 
 function SearchIcon({ color = '#4a5361', size = 20 }: { color?: string; size?: number }) {
@@ -151,7 +152,7 @@ export default function Layout() {
         <SearchForm id="q-desktop" latestNo={latestNo} />
         <button
           type="button"
-          className="icon-btn"
+          className="icon-btn search-btn"
           aria-label="회차 검색"
           aria-expanded={searchOpen}
           aria-controls="mobile-search"
@@ -164,7 +165,7 @@ export default function Layout() {
         </button>
         <button
           type="button"
-          className="icon-btn"
+          className="icon-btn menu-btn"
           aria-label={menuOpen ? '메뉴 닫기' : '메뉴 열기'}
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"

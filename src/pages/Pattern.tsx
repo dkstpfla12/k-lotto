@@ -1,6 +1,6 @@
 import { useData } from '../data/DataContext'
 import { carryDist, carryGe1Ratio, CONSEC_GE1_THEORY, consecDist, consecGe1Ratio, fmtInt, fmtPct, lowDist, oddDist, type DistRow } from '../data/calc'
-import { Card, usePageTitle } from '../components/ui'
+import { Callout, Card, usePageTitle } from '../components/ui'
 
 const MAX = 0.5 // 막대 높이 기준 50%
 
@@ -45,7 +45,7 @@ function Chart({ id, title, desc, badge, note, rows, unit }: { id: string; title
 }
 
 export default function Pattern() {
-  usePageTitle('패턴')
+  usePageTitle('패턴 분석')
   const { stats } = useData()
   const N = stats.length
   const odd = oddDist(stats)
@@ -60,9 +60,9 @@ export default function Pattern() {
   return (
     <>
       <div className="title-row">
-        <div className="stack">
-          <h1 className="title">패턴</h1>
-          <p className="lead-text">당첨번호의 구성 패턴을 실제 비율과 이론 확률(1~45에서 6개를 무작위로 뽑을 때)로 비교합니다.</p>
+        <div className="stack gap16 grow">
+          <h1 className="title">패턴 분석</h1>
+          <Callout lead="당첨번호의 구성 패턴을 실제 비율과 이론 확률로 비교합니다.">이론 확률은 1~45에서 6개를 무작위로 뽑을 때의 값입니다.</Callout>
         </div>
         <div className="legend md">
           <span>

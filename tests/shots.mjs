@@ -5,7 +5,7 @@ import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-const PAGES = ['', 'sum', 'freq', 'gap', 'pattern', 'mine', 'draw']
+const PAGES = ['', 'sum', 'freq', 'gap', 'pattern', 'mine', 'pick', 'draw']
 const WIDTHS = [1440, 1024, 390]
 const out = new URL('./shots/', import.meta.url)
 mkdirSync(out, { recursive: true })

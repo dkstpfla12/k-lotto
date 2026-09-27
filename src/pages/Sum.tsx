@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useData } from '../data/DataContext'
 import { BAND1, BAND2, fmtInt, fmtPct, SUM_MEAN, SUM_SD, sumHistogram, sumSummary, ZONES, zoneCounts } from '../data/calc'
-import { Card, Segment, Stat, usePageTitle } from '../components/ui'
+import { Callout, Card, Segment, Stat, usePageTitle } from '../components/ui'
 import SumTrend, { TrendLegend } from '../components/charts/SumTrend'
 import SumHist from '../components/charts/SumHist'
 
@@ -14,7 +14,7 @@ const ZONE_RANGE: Record<string, string> = {
 const ZONE_THEORY: Record<string, string> = { '1σ 이내': '약 68%', '1~2σ': '약 27%', '2σ 초과': '약 5%' }
 
 export default function Sum() {
-  usePageTitle('합계 분석')
+  usePageTitle('회차별 합계')
   const { stats } = useData()
   const [win, setWin] = useState<Win>(104)
   const N = stats.length
@@ -27,11 +27,9 @@ export default function Sum() {
 
   return (
     <>
-      <div className="stack">
-        <h1 className="title">합계 분석</h1>
-        <p className="lead-text">
-          당첨번호 6개의 합계는 종 모양(정규분포)에 가깝게 모입니다. 다만 매 회차는 독립이라 지난 합계로 다음 합계를 예측할 수는 없습니다.
-        </p>
+      <div className="stack gap16">
+        <h1 className="title">회차별 합계</h1>
+        <Callout lead="당첨번호 6개의 합계는 종 모양(정규분포)에 가깝게 모입니다.">다만 매 회차는 독립이라 지난 합계로 다음 합계를 예측할 수는 없습니다.</Callout>
       </div>
 
       <div className="stat-cards">

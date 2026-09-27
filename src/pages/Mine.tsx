@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useData } from '../data/DataContext'
 import { checkMine, fmtDate, fmtInt, WIN_ANY_THEORY, type MineHit, type Rank } from '../data/calc'
-import { Ball, Balls, Card, usePageTitle } from '../components/ui'
+import { Ball, Balls, Callout, Card, usePageTitle } from '../components/ui'
 
 const RULES: Record<Rank, string> = { 1: '6개 일치', 2: '5개 + 보너스', 3: '5개 일치', 4: '4개 일치', 5: '3개 일치' }
 
@@ -15,7 +16,7 @@ function randomSix(): number[] {
 }
 
 export default function Mine() {
-  usePageTitle('내 번호')
+  usePageTitle('내 번호 분석')
   const { draws } = useData()
   const N = draws.length
   const latest = draws[N - 1].draw_no
@@ -23,6 +24,23 @@ export default function Mine() {
   const [submitted, setSubmitted] = useState<number[] | null>(null)
   const [showAll5, setShowAll5] = useState(false)
   const [msg, setMsg] = useState('')
+  // /mine?nums=3,11,19,27,34,42 (내 번호 추천에서 넘어옴) → 바로 결과 표시
+  const [params] = useSearchParams()
+  const numsParam = params.get('nums')
+  useEffect(() => {
+    if (!numsParam) return
+    const nums = [...new Set(numsParam.split(',').map((t) => Number(t.trim())))]
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 45)
+      .sort((a, b) => a - b)
+    if (nums.length === 6) {
+      setPicked(nums)
+      setSubmitted(nums)
+      setShowAll5(false)
+      setMsg('')
+    } else {
+      setMsg('주소의 번호가 올바르지 않습니다. 1~45 사이 서로 다른 번호 6개가 필요합니다.')
+    }
+  }, [numsParam])
 
   const toggle = (n: number) => {
     setMsg('')
@@ -54,9 +72,9 @@ export default function Mine() {
 
   return (
     <>
-      <div className="stack">
-        <h1 className="title">내 번호로 과거 확인</h1>
-        <p className="lead-text">번호 6개를 고르면, 1회부터 매주 같은 번호를 샀을 때 몇 등을 몇 번 했을지 보여줍니다.</p>
+      <div className="stack gap16">
+        <h1 className="title">내 번호 분석</h1>
+        <Callout lead="번호 6개를 고르면, 1회부터 매주 같은 번호를 샀을 때 몇 등을 몇 번 했을지 보여줍니다.">과거 결과일 뿐 앞으로의 당첨과는 무관합니다.</Callout>
       </div>
 
       <div className="two mine-split">

@@ -2,12 +2,12 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useData } from '../data/DataContext'
 import { consecutivePairs, fmtDate, fmtEok, fmtInt, prizeRows } from '../data/calc'
-import { Balls, Card, Pager, ZoneBadge, usePageTitle } from '../components/ui'
+import { Balls, Callout, Card, Pager, ZoneBadge, usePageTitle } from '../components/ui'
 
 const PAGE = 10
 
 export default function Draw() {
-  usePageTitle('회차 조회')
+  usePageTitle('회차별 조회')
   const { draws, stats } = useData()
   const N = draws.length
   const latest = draws[N - 1].draw_no
@@ -50,11 +50,9 @@ export default function Draw() {
   return (
     <>
       <div className="title-row">
-        <div className="stack">
-          <h1 className="title">회차 조회</h1>
-          <p className="lead-text">
-            1회({fmtDate(draws[0].draw_date)})부터 최신 회차까지 당첨번호와 당첨금을 확인합니다.
-          </p>
+        <div className="stack gap16 grow">
+          <h1 className="title">회차별 조회</h1>
+          <Callout lead={`1회(${fmtDate(draws[0].draw_date)})부터 최신 회차까지 당첨번호와 당첨금을 확인합니다.`}>1등 당첨자가 없는 회차의 당첨금은 다음 회차로 이월됩니다.</Callout>
         </div>
         <form className="stack tight" onSubmit={submit} role="search" aria-label="회차 검색">
           <div className="form-row">

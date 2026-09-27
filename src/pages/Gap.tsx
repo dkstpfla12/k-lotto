@@ -1,10 +1,10 @@
 import { useData } from '../data/DataContext'
 import { gapSummary, sortByGap } from '../data/calc'
-import { Ball, Card, Stat, usePageTitle } from '../components/ui'
+import { Ball, Callout, Card, Stat, usePageTitle } from '../components/ui'
 import GapBars from '../components/charts/GapBars'
 
 export default function Gap() {
-  usePageTitle('미출현')
+  usePageTitle('미출현 분석')
   const { draws, status } = useData()
   const latest = draws[draws.length - 1].draw_no
   const sorted = sortByGap(status)
@@ -14,9 +14,9 @@ export default function Gap() {
 
   return (
     <>
-      <div className="stack">
-        <h1 className="title">미출현</h1>
-        <p className="lead-text">각 번호가 마지막으로 나온 뒤 몇 회째 나오지 않고 있는지 보여줍니다. 오래 쉬었다고 곧 나온다는 뜻은 아닙니다.</p>
+      <div className="stack gap16">
+        <h1 className="title">미출현 분석</h1>
+        <Callout lead="각 번호가 마지막으로 나온 뒤 몇 회째 나오지 않고 있는지 보여줍니다.">오래 쉬었다고 곧 나온다는 뜻은 아닙니다.</Callout>
       </div>
 
       <div className="stat-cards c4">

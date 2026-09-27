@@ -12,7 +12,7 @@ const BALL: [number, string][] = [
 export function ballColor(n: number): string {
   return BALL.find(([hi]) => n <= hi)?.[1] ?? '#aaaaaa'
 }
-export type BallSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | 'xxs'
+export type BallSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | 'xxs' | 'set' | 'mini'
 
 export function Ball({ n, size = 'md', hit }: { n: number; size?: BallSize; hit?: boolean | undefined }) {
   // hit === false → 맞히지 못한 번호(흰 공), hit === true → 맞힌 번호(테두리 강조), undefined → 일반
@@ -162,4 +162,19 @@ export function usePageTitle(title?: string) {
 
 export function Disclaimer() {
   return <p className="sub">과거 통계일 뿐, 다음 회차 당첨 확률과는 무관합니다. 매 회차 추첨은 서로 독립입니다.</p>
+}
+
+/** 안내 박스 (WEB_SPEC 7.2): 첫 문장은 굵게(lead), 나머지는 보통 굵기 */
+export function Callout({ lead, children }: { lead: string; children?: ReactNode }) {
+  return (
+    <div role="note" aria-label="안내" className="callout">
+      <span aria-hidden="true" className="callout-icon">
+        !
+      </span>
+      <p>
+        <b>{lead}</b>
+        {children !== undefined && <> {children}</>}
+      </p>
+    </div>
+  )
 }
