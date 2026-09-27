@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useData } from '../data/DataContext'
 import { BAND1, BAND2, fmtInt, fmtPct, SUM_MEAN, SUM_SD, sumHistogram, sumSummary, ZONES, zoneCounts } from '../data/calc'
 import { Card, Segment, Stat, usePageTitle } from '../components/ui'
-import SumTrend from '../components/charts/SumTrend'
+import SumTrend, { TrendLegend } from '../components/charts/SumTrend'
 import SumHist from '../components/charts/SumHist'
 
 type Win = 13 | 52 | 104 | 'all'
@@ -66,6 +66,9 @@ export default function Sum() {
           />
         </div>
         <SumTrend stats={slice} height={310} label={`${win === 'all' ? '전체' : `최근 ${win}회`} 번호 합계 추이와 정상 범위`} />
+        <div className="chart-note">
+          <TrendLegend />
+        </div>
       </Card>
 
       <div className="two sum-split">

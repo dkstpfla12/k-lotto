@@ -19,7 +19,7 @@ import {
   sortByRecent20,
 } from '../data/calc'
 import { Ball, Balls, Card, Segment, ZoneBadge, usePageTitle } from '../components/ui'
-import SumTrend from '../components/charts/SumTrend'
+import SumTrend, { TrendLegend } from '../components/charts/SumTrend'
 import Heatmap, { HeatScale } from '../components/Heatmap'
 
 type Win = 13 | 26 | 52 | 'all'
@@ -141,20 +141,7 @@ export default function Home() {
             </div>
             <SumTrend stats={slice} label={`${win === 'all' ? '전체' : `최근 ${win}회`} 번호 합계 추이와 정상 범위`} />
             <div className="chart-note">
-              <span className="legend">
-                <span>
-                  <i className="sw line" style={{ background: '#13203b' }} />
-                  회차별 합계
-                </span>
-                <span>
-                  <i className="sw" style={{ background: '#e2e9f4' }} />
-                  ±1σ 정상 범위
-                </span>
-                <span>
-                  <i className="sw" style={{ background: '#f1f4f9', border: '1px solid #d5dbe4' }} />
-                  ±2σ
-                </span>
-              </span>
+              <TrendLegend />
               <span className="grow" />
               <span>각 회차는 독립 시행이라 추이로 다음 합계를 예측할 수는 없습니다.</span>
             </div>

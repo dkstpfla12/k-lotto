@@ -4,6 +4,30 @@ import type { DrawStats } from '../../data/types'
 
 const TICK = { fontSize: 13, fill: '#4a5361' }
 
+/** 차트 아래 범례: 구간 값은 차트 안 라벨 대신 여기서만 표시한다 */
+export function TrendLegend() {
+  return (
+    <span className="legend">
+      <span>
+        <i className="sw line" style={{ background: '#13203b' }} />
+        회차별 합계
+      </span>
+      <span>
+        <i className="sw line" style={{ background: '#8b96a8', height: 0, borderTop: '2px dashed #8b96a8' }} />
+        평균 {SUM_MEAN}
+      </span>
+      <span>
+        <i className="sw" style={{ background: '#e2e9f4' }} />
+        ±1σ 정상 범위 {BAND1.lo}~{BAND1.hi}
+      </span>
+      <span>
+        <i className="sw" style={{ background: '#f1f4f9', border: '1px solid #d5dbe4' }} />
+        ±2σ {BAND2.lo}~{BAND2.hi}
+      </span>
+    </span>
+  )
+}
+
 /** 최신 회차 점 + 값 라벨(점 왼쪽 빨간 상자, 시안과 동일). ReferenceDot의 shape로 직접 그린다. */
 function LastDot(props: { cx?: number; cy?: number; value?: number }) {
   const { cx = 0, cy = 0, value } = props
@@ -33,25 +57,15 @@ export default function SumTrend({ stats, height = 300, label }: { stats: DrawSt
   return (
     <div className="chart" role="img" aria-label={label}>
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={stats} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
-          <ReferenceArea
-            y1={BAND2.lo}
-            y2={BAND2.hi}
-            fill="#f1f4f9"
-            fillOpacity={1}
-            ifOverflow="visible"
-            label={{ value: `±2σ ${BAND2.lo}~${BAND2.hi}`, position: 'insideTopRight', fontSize: 13, fill: '#4a5361', dx: -6, dy: 4 }}
+        <LineChart data={stats} margin={{ top: 12, right: 12, bottom: 0, left: -8 }}>
+          <ReferenceArea y1={BAND2.lo} y2={BAND2.hi} fill="#f1f4f9" fillOpacity={1} ifOverflow="visible" />
+          <ReferenceArea y1={BAND1.lo} y2={BAND1.hi} fill="#e2e9f4" fillOpacity={1} ifOverflow="visible" />
+          <ReferenceLine
+            y={SUM_MEAN}
+            stroke="#8b96a8"
+            strokeDasharray="3 4"
+            label={{ value: `평균 ${SUM_MEAN}`, position: 'left', fontSize: 13, fill: '#4a5361', offset: 4 }}
           />
-          <ReferenceArea
-            y1={BAND1.lo}
-            y2={BAND1.hi}
-            fill="#e2e9f4"
-            fillOpacity={1}
-            ifOverflow="visible"
-            label={{ value: `±1σ ${BAND1.lo}~${BAND1.hi}`, position: 'insideTopRight', fontSize: 13, fill: '#2f3b52', dx: -6, dy: 4 }}
-          />
-          <ReferenceLine y={SUM_MEAN} stroke="#8b96a8" strokeDasharray="3 4" />
-          <ReferenceLine y={SUM_MEAN} stroke="none" label={{ value: `평균 ${SUM_MEAN}`, position: 'insideBottomLeft', fontSize: 13, fill: '#4a5361', dy: -4 }} />
           <XAxis
             dataKey="draw_no"
             type="number"
@@ -64,7 +78,7 @@ export default function SumTrend({ stats, height = 300, label }: { stats: DrawSt
             interval={0}
             height={28}
           />
-          <YAxis domain={[yMin, yMax]} ticks={[80, 120, 160, 200]} tick={TICK} axisLine={false} tickLine={false} width={40} />
+          <YAxis domain={[yMin, yMax]} ticks={[80, 120, 160, 200]} tick={TICK} axisLine={false} tickLine={false} width={64} />
           <Tooltip
             formatter={(v) => [`${v}`, '합계']}
             labelFormatter={(l, p) => {

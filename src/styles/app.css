@@ -1318,6 +1318,7 @@ main.page {
   .balls.latest {
     justify-content: space-between;
     gap: 4px;
+    flex-wrap: nowrap; /* 번호 6개 + "+" + 보너스를 한 줄에 */
   }
   .balls.latest .plus {
     font-size: var(--fs-17);
@@ -1328,6 +1329,21 @@ main.page {
     width: 40px;
     height: 40px;
     font-size: var(--fs-17);
+  }
+}
+/* ── 폭 390 이하: 당첨번호 공 36px ─────────────── */
+@media (max-width: 390px) {
+  .balls.latest {
+    gap: 3px;
+  }
+  .balls.latest .plus {
+    font-size: var(--fs-15);
+  }
+  .ball.lg,
+  .ball.xl {
+    width: 36px;
+    height: 36px;
+    font-size: var(--fs-15);
   }
   .seg {
     display: grid;
