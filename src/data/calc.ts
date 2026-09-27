@@ -278,3 +278,28 @@ export function fmtEok(won: number, digits = 1): string {
 }
 export const fmtPct = (ratio: number, digits = 1) => (ratio * 100).toFixed(digits) + '%'
 export const fmtSigned = (n: number, digits = 1) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(digits)
+
+// ── 등수별 당첨금 (회차 조회 표) ────────────────────────
+export interface PrizeRow {
+  rank: Rank
+  rule: string
+  winners: number | null
+  each: number | null
+  total: number | null // 당첨자 수 × 1인당 당첨금
+}
+export function prizeRows(d: Draw): PrizeRow[] {
+  const mk = (rank: Rank, rule: string, winners: number | null, each: number | null): PrizeRow => ({
+    rank,
+    rule,
+    winners,
+    each,
+    total: winners !== null && each !== null ? winners * each : null,
+  })
+  return [
+    mk(1, '6개 일치', d.first_winners, d.first_prize_each),
+    mk(2, '5개 + 보너스', d.second_winners, d.second_prize_each),
+    mk(3, '5개 일치', d.third_winners, d.third_prize_each),
+    mk(4, '4개 일치', d.fourth_winners, d.fourth_prize_each),
+    mk(5, '3개 일치', d.fifth_winners, d.fifth_prize_each),
+  ]
+}

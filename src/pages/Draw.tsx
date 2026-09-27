@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useData } from '../data/DataContext'
-import { consecutivePairs, fmtDate, fmtEok, fmtInt } from '../data/calc'
+import { consecutivePairs, fmtDate, fmtEok, fmtInt, prizeRows } from '../data/calc'
 import { Balls, Card, Pager, ZoneBadge, usePageTitle } from '../components/ui'
 
 const PAGE = 10
@@ -125,7 +125,7 @@ export default function Draw() {
           </div>
           <div className="scroll-x">
             <table className="tbl pad16" style={{ minWidth: 560 }}>
-              <caption className="sr-only">{draw.draw_no}회 등수별 당첨자 수와 당첨금 (현재 1·2등만 제공)</caption>
+              <caption className="sr-only">{draw.draw_no}회 등수별 당첨자 수와 당첨금</caption>
               <thead>
                 <tr>
                   <th scope="col">등수</th>
@@ -142,26 +142,24 @@ export default function Draw() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <th scope="row" className="up">
-                    1등
-                  </th>
-                  <td className="muted">6개 일치</td>
-                  <td className="r">{fmtInt(draw.first_winners)}명</td>
-                  <td className="r b">{draw.first_winners > 0 ? `${fmtInt(draw.first_prize_each)}원` : '—'}</td>
-                  <td className="r">{draw.first_winners > 0 ? `${fmtInt(draw.first_winners * draw.first_prize_each)}원` : '—'}</td>
-                </tr>
-                <tr>
-                  <th scope="row">2등</th>
-                  <td className="muted">5개 + 보너스</td>
-                  <td className="r">{fmtInt(draw.second_winners)}명</td>
-                  <td className="r b">{draw.second_winners > 0 ? `${fmtInt(draw.second_prize_each)}원` : '—'}</td>
-                  <td className="r">{draw.second_winners > 0 ? `${fmtInt(draw.second_winners * draw.second_prize_each)}원` : '—'}</td>
-                </tr>
+                {prizeRows(draw).map((r) => (
+                  <tr key={r.rank}>
+                    <th scope="row" className={r.rank === 1 ? 'up' : ''}>
+                      {r.rank}등
+                    </th>
+                    <td className="muted">{r.rule}</td>
+                    <td className="r">{r.winners !== null ? `${fmtInt(r.winners)}명` : '—'}</td>
+                    <td className="r b">{r.each !== null && r.winners ? `${fmtInt(r.each)}원` : '—'}</td>
+                    <td className="r">{r.total !== null && r.winners ? `${fmtInt(r.total)}원` : '—'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-          <p className="small">3~5등 당첨 정보는 수집 항목에 추가되는 대로 표시합니다.</p>
+          <p className="small">
+            {draw.total_winners !== null && <>1~5등 총 당첨자 {fmtInt(draw.total_winners)}명 · </>}
+            등수별 총 당첨금 = 당첨자 수 × 1인당 당첨금
+          </p>
         </div>
       </Card>
 

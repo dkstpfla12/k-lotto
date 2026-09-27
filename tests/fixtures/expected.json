@@ -268,5 +268,18 @@
    28,
    157
   ]
- ]
+ ],
+ "prizes_1243": {
+  "first_winners": 12,
+  "first_prize_each": 2592525282,
+  "second_winners": 115,
+  "second_prize_each": 45087397,
+  "third_winners": 3591,
+  "third_prize_each": 1443902,
+  "fourth_winners": 174306,
+  "fourth_prize_each": 50000,
+  "fifth_winners": 2853501,
+  "fifth_prize_each": 5000,
+  "total_winners": 3031525
+ }
 }

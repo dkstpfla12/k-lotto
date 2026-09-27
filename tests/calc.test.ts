@@ -122,3 +122,25 @@ describe('내 번호', () => {
     expect(Number((c.WIN_ANY_THEORY * 100).toFixed(1))).toBe(2.4)
   })
 })
+
+describe('등수별 당첨금 (회차 조회)', () => {
+  it('1243회 3등 3,591명 · 1,443,902원, 4등 174,306명 · 50,000원, 5등 2,853,501명 · 5,000원', () => {
+    const d = draws.find((x) => x.draw_no === 1243)!
+    const P = E.prizes_1243
+    expect([d.third_winners, d.third_prize_each]).toEqual([3591, 1443902])
+    expect([d.fourth_winners, d.fourth_prize_each]).toEqual([174306, 50000])
+    expect([d.fifth_winners, d.fifth_prize_each]).toEqual([2853501, 5000])
+    expect(d.total_winners).toBe(P.total_winners)
+    expect(d.total_winners).toBe(d.first_winners + d.second_winners + d.third_winners! + d.fourth_winners! + d.fifth_winners!)
+    const rows = c.prizeRows(d)
+    expect(rows.map((r) => r.total)).toEqual([12 * 2592525282, 115 * 45087397, 3591 * 1443902, 174306 * 50000, 2853501 * 5000])
+    expect(rows[2].total).toBe(5185052082)
+    expect(rows[3].total).toBe(8715300000)
+    expect(rows[4].total).toBe(14267505000)
+  })
+  it('1회차(초기 회차)도 3~5등 값이 있다', () => {
+    const d = draws[0]
+    expect(d.third_winners).toBe(28)
+    expect(d.fifth_prize_each).toBe(10000)
+  })
+})

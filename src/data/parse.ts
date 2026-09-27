@@ -33,6 +33,13 @@ export function parseDraws(csv: string): Draw[] {
       first_prize_each: num(r.first_prize_each),
       second_winners: num(r.second_winners),
       second_prize_each: num(r.second_prize_each),
+      third_winners: numOrNull(r.third_winners),
+      third_prize_each: numOrNull(r.third_prize_each),
+      fourth_winners: numOrNull(r.fourth_winners),
+      fourth_prize_each: numOrNull(r.fourth_prize_each),
+      fifth_winners: numOrNull(r.fifth_winners),
+      fifth_prize_each: numOrNull(r.fifth_prize_each),
+      total_winners: numOrNull(r.total_winners),
       collected_at: r.collected_at ?? '',
     }))
     .sort((a, b) => a.draw_no - b.draw_no)

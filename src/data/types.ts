@@ -11,6 +11,13 @@ export interface Draw {
   first_prize_each: number
   second_winners: number
   second_prize_each: number
+  third_winners: number | null // 3~5등·총 당첨자: 2026-09-27 수집기에 추가. 없으면 null
+  third_prize_each: number | null
+  fourth_winners: number | null
+  fourth_prize_each: number | null
+  fifth_winners: number | null
+  fifth_prize_each: number | null
+  total_winners: number | null // 1~5등 총 당첨자 수
   collected_at: string // 수집 시각 (ISO)
 }
 
