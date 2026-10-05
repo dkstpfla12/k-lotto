@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useData } from '../data/DataContext'
-import { BAND1, BAND2, fmtInt, fmtPct, inBandRatio, SUM_MEAN, type Period } from '../data/calc'
+import { fmtInt, type Period } from '../data/calc'
 import {
   DEFAULT_CONFIG,
   describeSet,
@@ -21,18 +21,46 @@ import {
   type PickConfig,
   type PickMode,
 } from '../data/pick'
+import {
+  backtestRecent,
+  BASIS_LABEL,
+  comboRatio,
+  FIXED_MEAN,
+  FIXED_SD,
+  fixedRange,
+  markerPct,
+  pastRatio,
+  pct1,
+  RECENT_N,
+  recentRange,
+  WIDTH_LABEL,
+  WIDTHS,
+  type SumBasis,
+  type SumRange,
+  type SumWidth,
+} from '../data/sumrange'
 import { Ball, Callout, Card, Segment, usePageTitle } from '../components/ui'
 
-type Quick = '1' | '2' | 'custom'
 const LABELS = ['A', 'B', 'C', 'D', 'E']
 
 export default function Pick() {
   usePageTitle('내 번호 추천')
   const data = useData()
-  const { draws, stats, status } = data
+  const { draws, status } = data
   const N = draws.length
-  const [cfg, setCfg] = useState<PickConfig>(DEFAULT_CONFIG)
-  const [quick, setQuick] = useState<Quick>('1')
+  const latest = draws[N - 1]
+  // 합계 범위 (WEB_SPEC 8.2): 범위 기준 3가지 × 범위 폭 3가지. 기본은 최근 30회 · 보통
+  const sums = useMemo(() => draws.map((d) => d.sum), [draws])
+  const hasRecent = sums.length >= RECENT_N
+  const rangeFor = (b: SumBasis, w: SumWidth): SumRange => (b === 'recent30' ? (recentRange(sums, w) ?? fixedRange(w)) : fixedRange(w))
+  const initialBasis: SumBasis = hasRecent ? 'recent30' : 'fixed'
+  const initialCfg = (): PickConfig => {
+    const r = rangeFor(initialBasis, 'normal')
+    return { ...DEFAULT_CONFIG, sumMin: r.lo, sumMax: r.hi }
+  }
+  const [cfg, setCfg] = useState<PickConfig>(initialCfg)
+  const [basis, setBasis] = useState<SumBasis>(initialBasis)
+  const [width, setWidth] = useState<SumWidth>('normal')
   const [includeText, setIncludeText] = useState('')
   const [excludeText, setExcludeText] = useState('')
   const [result, setResult] = useState<{ sets: number[][]; summary: string } | null>(null)
@@ -52,25 +80,36 @@ export default function Pick() {
   }, [includeText, excludeText, cfg, data])
 
   const set = <K extends keyof PickConfig>(k: K, v: PickConfig[K]) => setCfg((c) => ({ ...c, [k]: v }))
-  const setSumRange = (lo: number, hi: number, q: Quick) => {
-    setCfg((c) => ({ ...c, sumMin: lo, sumMax: hi }))
-    setQuick(q)
+  // 범위 기준·폭 버튼: 계산한 범위를 넣는다. 직접 입력은 값을 그대로 둔다
+  const chooseBasis = (b: SumBasis) => {
+    setBasis(b)
+    if (b === 'custom') return
+    const r = rangeFor(b, width)
+    setCfg((c) => ({ ...c, sumMin: r.lo, sumMax: r.hi }))
   }
+  const chooseWidth = (w: SumWidth) => {
+    setWidth(w)
+    const r = rangeFor(basis, w)
+    setCfg((c) => ({ ...c, sumMin: r.lo, sumMax: r.hi }))
+  }
+  // 입력란이나 슬라이더를 건드리면 범위 기준이 "직접 입력"으로 바뀐다 (값은 유지)
   const onSumInput = (k: 'sumMin' | 'sumMax') => (e: ChangeEvent<HTMLInputElement>) => {
     const v = Number(e.target.value)
     if (e.target.value === '' || Number.isNaN(v)) return
     set(k, v)
-    setQuick('custom')
+    setBasis('custom')
   }
   const onRange = (k: 'sumMin' | 'sumMax') => (e: ChangeEvent<HTMLInputElement>) => {
     const v = Number(e.target.value)
     setCfg((c) => (k === 'sumMin' ? { ...c, sumMin: Math.min(v, c.sumMax) } : { ...c, sumMax: Math.max(v, c.sumMin) }))
-    setQuick('custom')
+    setBasis('custom')
   }
 
   const detail = (c: PickConfig) =>
     c.mode === 'sum'
-      ? `${c.sumMin}~${c.sumMax}`
+      ? basis === 'custom'
+        ? `${BASIS_LABEL.custom} ${c.sumMin}~${c.sumMax}`
+        : `${BASIS_LABEL[basis]} · ${WIDTH_LABEL[width]} ${c.sumMin}~${c.sumMax}`
       : c.mode === 'freq'
         ? `${PERIOD_LABEL[String(c.freqPeriod)]} ${c.freqBasis === 'hot' ? '많이' : '적게'} 나온 ${c.freqPool}개 후보`
         : c.mode === 'gap'
@@ -90,8 +129,9 @@ export default function Pick() {
     setTimeout(() => resultRef.current?.focus(), 0)
   }
   const reset = () => {
-    setCfg(DEFAULT_CONFIG)
-    setQuick('1')
+    setCfg(initialCfg())
+    setBasis(initialBasis)
+    setWidth('normal')
     setIncludeText('')
     setExcludeText('')
     setResult(null)
@@ -111,7 +151,16 @@ export default function Pick() {
     return () => clearTimeout(t)
   }, [copied])
 
-  const pct = (v: number) => `${((v - SUM_MIN) / (SUM_MAX - SUM_MIN)) * 100}%`
+  const pct = (v: number) => `${Math.max(0, Math.min(100, markerPct(v)))}%`
+  // 근거 수치 (8.5) — 모두 데이터에서 실시간 계산
+  const recent = recentRange(sums, width)
+  const rangeOk = Number.isInteger(cfg.sumMin) && Number.isInteger(cfg.sumMax) && cfg.sumMin <= cfg.sumMax
+  const comboR = rangeOk ? comboRatio(cfg.sumMin, cfg.sumMax) : null
+  const backR = useMemo(() => backtestRecent(sums, width), [sums, width])
+  const pastR = rangeOk ? pastRatio(sums, cfg.sumMin, cfg.sumMax) : null
+  const useRecent = basis === 'recent30' && recent !== null
+  const meanPos = useRecent ? recent.mean : FIXED_MEAN
+  const defaultRange = rangeFor(initialBasis, 'normal')
   const freqExample = freqPool(status, 'all', 'hot', 8)
   const gapExample = gapPool(status, 10)
   const curFreqPool = cfg.mode === 'freq' ? freqPool(status, cfg.freqPeriod, cfg.freqBasis, cfg.freqPool) : []
@@ -123,6 +172,55 @@ export default function Pick() {
         <h1 className="title">내 번호 추천</h1>
         <Callout lead="원하는 조건에 맞는 번호 조합을 만들어 드립니다.">어떤 조건으로 만들어도 모든 조합의 당첨 확률은 1/{fmtInt(TOTAL_COMBOS)}으로 같습니다.</Callout>
       </div>
+
+      <Card aria-labelledby="h-modes">
+        <div className="stack">
+          <h2 id="h-modes" className="h2">
+            추천 방식별 조건 필드
+          </h2>
+          <p className="sub">아래 &quot;조건 설정&quot;에서 추천 방식을 고르면 조건 영역이 다음 구성으로 바뀝니다. 공통 옵션은 모든 방식에 함께 적용됩니다.</p>
+        </div>
+        <div className="info-cards">
+          <ModeCard active={cfg.mode === 'random'} title="무작위 선택" desc="추가 조건 없이 1~45에서 6개를 고르게 뽑습니다.">
+            <p className="small">공통 옵션(넣을 번호, 뺄 번호, 홀짝)만 적용</p>
+          </ModeCard>
+          <ModeCard active={cfg.mode === 'sum'} title="합계 기반 추천" desc="6개 합계가 지정한 범위 안인 조합만 만듭니다. 기본 범위는 최근 30회 합계로 계산해 매주 달라집니다.">
+            <ul>
+              <li>범위 기준: 최근 30회 · 전체 평균 · 직접 입력</li>
+              <li>범위 폭: 좁게 · 보통 · 넓게</li>
+              <li>
+                {fmtInt(latest.draw_no + 1)}회 기본 범위: {defaultRange.lo}~{defaultRange.hi}
+              </li>
+              <li>슬라이더에 직전 회차 합계 표시</li>
+            </ul>
+          </ModeCard>
+          <ModeCard active={cfg.mode === 'freq'} title="빈도 기반 추천" desc="많이(또는 적게) 나온 번호 후보 안에서 6개를 뽑습니다.">
+            <ul>
+              <li>기간: 전체 · 최근 20 · 10 · 5회</li>
+              <li>기준: 많이 나온 / 적게 나온</li>
+              <li>후보 번호 수: 10 ~ 30개 (기본 15)</li>
+            </ul>
+            <div className="pool">
+              <span className="small">예: 전체 · 많이 · 상위</span>
+              {freqExample.map((n) => (
+                <Ball key={n} n={n} size="mini" />
+              ))}
+            </div>
+          </ModeCard>
+          <ModeCard active={cfg.mode === 'gap'} title="미출현 기반 추천" desc="오래 쉰 번호를 정한 개수만큼 넣고 나머지는 무작위로 채웁니다.">
+            <ul>
+              <li>최소 공백: N회 이상 (기본 10)</li>
+              <li>포함 개수: 1 · 2 · 3개</li>
+            </ul>
+            <div className="pool">
+              <span className="small">예: 10회 이상 {gapExample.length}개</span>
+              {gapExample.map((n) => (
+                <Ball key={n} n={n} size="mini" />
+              ))}
+            </div>
+          </ModeCard>
+        </div>
+      </Card>
 
       <div className="two pick-split">
         <Card className="gap28" aria-labelledby="cond-title">
@@ -148,8 +246,39 @@ export default function Pick() {
           {cfg.mode === 'sum' && (
             <fieldset className="fs">
               <legend>합계 기반 조건</legend>
+
               <div className="stack">
-                <span className="lbl-mid">합계 범위</span>
+                <span className="lbl-b">범위 기준</span>
+                <div role="group" aria-label="범위 기준" className="seg dark c3">
+                  {(['recent30', 'fixed', 'custom'] as SumBasis[]).map((b) => (
+                    <button key={b} type="button" aria-pressed={basis === b} disabled={b === 'recent30' && !hasRecent} onClick={() => chooseBasis(b)}>
+                      {BASIS_LABEL[b]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {basis !== 'custom' && (
+                <div className="stack">
+                  <span className="lbl-b">범위 폭</span>
+                  <div role="group" aria-label="범위 폭" className="widths">
+                    {WIDTHS.map((w) => {
+                      const r = rangeFor(basis, w)
+                      return (
+                        <button key={w} type="button" className="width-btn" aria-pressed={width === w} onClick={() => chooseWidth(w)}>
+                          <span className="nm">{WIDTH_LABEL[w]}</span>
+                          <span className="rg">
+                            {r.lo}~{r.hi}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="stack">
+                <span className="lbl-b">합계 범위</span>
                 <div className="form-row">
                   <label className="field grow">
                     <span className="lbl small">최소</span>
@@ -163,33 +292,62 @@ export default function Pick() {
                     <input type="text" inputMode="numeric" value={cfg.sumMax} onChange={onSumInput('sumMax')} aria-label="합계 최대" />
                   </label>
                 </div>
-                <div className="dual" style={{ ['--lo' as string]: pct(cfg.sumMin), ['--hi' as string]: pct(cfg.sumMax) }}>
-                  <div className="dual-track" aria-hidden="true" />
-                  <div className="dual-fill" aria-hidden="true" />
-                  <input type="range" min={SUM_MIN} max={SUM_MAX} value={cfg.sumMin} onChange={onRange('sumMin')} aria-label="합계 최소 슬라이더" />
-                  <input type="range" min={SUM_MIN} max={SUM_MAX} value={cfg.sumMax} onChange={onRange('sumMax')} aria-label="합계 최대 슬라이더" />
+                <div className="dual-wrap" role="group" aria-label="합계 범위 슬라이더" aria-describedby="last-sum-desc">
+                  <span id="last-sum-desc" className="sr-only">
+                    직전 {latest.draw_no}회 합계 {latest.sum}
+                  </span>
+                  <span className="mark-label" aria-hidden="true" style={{ left: `clamp(46px, ${pct(latest.sum)}, calc(100% - 46px))` }}>
+                    직전 회차 {latest.sum}
+                  </span>
+                  <span className="mark-tri" aria-hidden="true" style={{ left: pct(latest.sum) }} />
+                  <div className="dual" style={{ ['--lo' as string]: pct(cfg.sumMin), ['--hi' as string]: pct(cfg.sumMax) }}>
+                    <div className="dual-track" aria-hidden="true" />
+                    <div className="dual-fill" aria-hidden="true" />
+                    <div className="mark-line" aria-hidden="true" style={{ left: pct(latest.sum) }} />
+                    <input type="range" min={SUM_MIN} max={SUM_MAX} value={cfg.sumMin} onChange={onRange('sumMin')} aria-label="합계 최소 슬라이더" />
+                    <input type="range" min={SUM_MIN} max={SUM_MAX} value={cfg.sumMax} onChange={onRange('sumMax')} aria-label="합계 최대 슬라이더" />
+                  </div>
                 </div>
-                <div className="card-head small" style={{ flexWrap: 'nowrap' }}>
-                  <span>{SUM_MIN}</span>
-                  <span>평균 {SUM_MEAN}</span>
-                  <span>{SUM_MAX}</span>
+                <div className="scale">
+                  <span style={{ left: 0 }}>{SUM_MIN}</span>
+                  <span className="mid" style={{ left: pct(meanPos) }}>
+                    {useRecent ? `최근 ${RECENT_N}회 평균 ${recent.mean.toFixed(1)}` : `전체 평균 ${FIXED_MEAN}`}
+                  </span>
+                  <span style={{ right: 0 }}>{SUM_MAX}</span>
                 </div>
               </div>
-              <div role="group" aria-label="범위 빠른 선택" className="pills">
-                <button type="button" className="pill" aria-pressed={quick === '1'} onClick={() => setSumRange(BAND1.lo, BAND1.hi, '1')}>
-                  ±1σ {BAND1.lo}~{BAND1.hi}
-                </button>
-                <button type="button" className="pill" aria-pressed={quick === '2'} onClick={() => setSumRange(BAND2.lo, BAND2.hi, '2')}>
-                  ±2σ {BAND2.lo}~{BAND2.hi}
-                </button>
-                <button type="button" className="pill" aria-pressed={quick === 'custom'} onClick={() => setQuick('custom')}>
-                  직접 입력
-                </button>
+
+              <div className="evi">
+                <div className="evi-tile">
+                  <span className="small">전체 조합 중</span>
+                  <b>{comboR ? pct1(comboR) : '—'}</b>
+                </div>
+                <div className="evi-tile">
+                  {useRecent ? (
+                    <>
+                      <span className="small">과거 {fmtInt(backR.total)}회에 적용하면</span>
+                      <b>{pct1(backR)}</b>
+                    </>
+                  ) : (
+                    <>
+                      <span className="small">과거 당첨번호 {fmtInt(N)}회 중</span>
+                      <b>{pastR ? pct1(pastR) : '—'}</b>
+                    </>
+                  )}
+                </div>
               </div>
-              <p className="small">
-                {quick === '1' && <>전체 조합의 약 68%가 이 범위에 들어갑니다. 과거 당첨번호는 {fmtPct(inBandRatio(stats))}였습니다.</>}
-                {quick === '2' && <>전체 조합의 약 95%가 이 범위에 들어갑니다.</>}
-                {quick === 'custom' && <>최소·최대를 직접 입력하거나 슬라이더를 움직이세요 ({SUM_MIN}~{SUM_MAX}).</>}
+              <p className="small lh15">
+                {useRecent && (
+                  <>
+                    최근 {RECENT_N}회({fmtInt(recent.from)}~{fmtInt(recent.to)}회) 합계의 평균 {recent.mean.toFixed(1)}, 표준편차 {recent.sd.toFixed(1)}으로 계산한 범위이며 매주 달라집니다.{' '}
+                  </>
+                )}
+                {basis === 'fixed' && (
+                  <>
+                    1~45에서 6개를 뽑을 때의 평균 {FIXED_MEAN}, 표준편차 {FIXED_SD}로 계산한 고정 범위입니다.{' '}
+                  </>
+                )}
+                위 숫자는 합계가 이 범위에 들어온 비율입니다. <b className="strong">당첨 확률과는 다릅니다.</b>
               </p>
             </fieldset>
           )}
@@ -414,52 +572,6 @@ export default function Pick() {
         </div>
       </div>
 
-      <Card aria-labelledby="h-modes">
-        <div className="stack">
-          <h2 id="h-modes" className="h2">
-            추천 방식별 조건 필드
-          </h2>
-          <p className="sub">드롭다운에서 추천 방식을 바꾸면 위 &quot;조건&quot; 영역이 아래 구성으로 바뀝니다. 공통 옵션은 모든 방식에 함께 적용됩니다.</p>
-        </div>
-        <div className="info-cards">
-          <ModeCard active={cfg.mode === 'random'} title="무작위 선택" desc="추가 조건 없이 1~45에서 6개를 고르게 뽑습니다.">
-            <p className="small">공통 옵션(넣을 번호, 뺄 번호, 홀짝)만 적용</p>
-          </ModeCard>
-          <ModeCard active={cfg.mode === 'sum'} title="합계 기반 추천" desc="6개 합계가 지정한 범위 안인 조합만 만듭니다.">
-            <ul>
-              <li>합계 범위 (최소 ~ 최대)</li>
-              <li>
-                빠른 선택: ±1σ {BAND1.lo}~{BAND1.hi}, ±2σ {BAND2.lo}~{BAND2.hi}
-              </li>
-            </ul>
-          </ModeCard>
-          <ModeCard active={cfg.mode === 'freq'} title="빈도 기반 추천" desc="많이(또는 적게) 나온 번호 후보 안에서 6개를 뽑습니다.">
-            <ul>
-              <li>기간: 전체 · 최근 20 · 10 · 5회</li>
-              <li>기준: 많이 나온 / 적게 나온</li>
-              <li>후보 번호 수: 10 ~ 30개 (기본 15)</li>
-            </ul>
-            <div className="pool">
-              <span className="small">예: 전체 · 많이 · 상위</span>
-              {freqExample.map((n) => (
-                <Ball key={n} n={n} size="mini" />
-              ))}
-            </div>
-          </ModeCard>
-          <ModeCard active={cfg.mode === 'gap'} title="미출현 기반 추천" desc="오래 쉰 번호를 정한 개수만큼 넣고 나머지는 무작위로 채웁니다.">
-            <ul>
-              <li>최소 공백: N회 이상 (기본 10)</li>
-              <li>포함 개수: 1 · 2 · 3개</li>
-            </ul>
-            <div className="pool">
-              <span className="small">예: 10회 이상 {gapExample.length}개</span>
-              {gapExample.map((n) => (
-                <Ball key={n} n={n} size="mini" />
-              ))}
-            </div>
-          </ModeCard>
-        </div>
-      </Card>
     </>
   )
 }

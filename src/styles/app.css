@@ -1284,9 +1284,9 @@ main.page {
 }
 .dual input[type='range'] {
   position: absolute;
-  left: 0;
+  left: -10px; /* 손잡이 중심이 트랙의 0~100%를 지나도록 손잡이 반지름만큼 넓힌다 (표식 위치와 일치) */
   top: 0;
-  width: 100%;
+  width: calc(100% + 20px);
   height: 24px;
   margin: 0;
   appearance: none;
@@ -1507,6 +1507,130 @@ a.btn {
   font-size: 12px;
   color: #fff;
   background: var(--brand);
+}
+
+
+/* ── 합계 기반 조건: 범위 기준·범위 폭·표식·근거 (WEB_SPEC 8.3~8.5) ── */
+.lbl-b {
+  font-size: var(--fs-15);
+  font-weight: 700;
+}
+.seg button:disabled {
+  color: var(--muted2);
+  cursor: default;
+}
+.widths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.width-btn {
+  height: 56px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: #fff;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 4px;
+  min-width: 0;
+}
+.width-btn .nm {
+  font-size: var(--fs-13);
+  color: var(--muted);
+}
+.width-btn .rg {
+  font-size: var(--fs-15);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.width-btn[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+.width-btn[aria-pressed='true'] .nm {
+  color: #fff;
+}
+.dual-wrap {
+  position: relative;
+  padding-top: 32px;
+  margin-top: 4px;
+}
+.dual-wrap .dual {
+  margin-top: 0;
+}
+.mark-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--text);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  pointer-events: none;
+}
+.mark-tri {
+  position: absolute;
+  top: 20px;
+  margin-left: -5px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--text);
+  pointer-events: none;
+}
+.mark-line {
+  position: absolute;
+  top: 6px;
+  margin-left: -1px;
+  width: 2px;
+  height: 12px;
+  background: #fff;
+  pointer-events: none;
+}
+.scale {
+  position: relative;
+  height: 16px;
+  font-size: var(--fs-13);
+  line-height: 16px;
+  color: var(--muted);
+}
+.scale span {
+  position: absolute;
+  white-space: nowrap;
+}
+.scale .mid {
+  transform: translateX(-50%);
+}
+.evi {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.evi-tile {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.evi-tile b {
+  font-size: var(--fs-19);
+}
+.lh15 {
+  line-height: 1.5;
 }
 
 /* ── 태블릿 768~1279: 1단, 우측 카드는 아래로 ── */

@@ -11,7 +11,7 @@ const E = JSON.parse(fx('expected.json'))
 const uniq6 = (s: number[]) => s.length === 6 && new Set(s).size === 6 && s.every((n) => Number.isInteger(n) && n >= 1 && n <= 45)
 
 describe('합계 기반 추천 (명세 검증: 5,000세트)', () => {
-  it('108~168 조건으로 만든 5,000세트가 모두 범위 안이고 번호가 겹치지 않는다', () => {
+  it('전체 평균 · 보통(108~168) 조건으로 만든 5,000세트가 모두 범위 안이고 번호가 겹치지 않는다', () => {
     const cfg = { ...P.DEFAULT_CONFIG, mode: 'sum' as const, sumMin: 108, sumMax: 168 }
     let inRange = 0
     for (let i = 0; i < 5000; i++) {
